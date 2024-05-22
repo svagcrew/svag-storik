@@ -111,41 +111,67 @@ const events = {
 setPersistentEngine(storage, events)
 
 type StorikStore = Record<string, any>
-type CreateStorikOptionsWithoutSchema<TStorikStore extends StorikStore = StorikStore> = {
+type CreateStorikOptionsWithoutSchema<
+  TStorikStore extends StorikStore = StorikStore,
+  TPersistentKey extends string | false = string | false,
+> = {
   projectSlug?: string
-  persistent?: string | false
+  persistent?: TPersistentKey
   defaultValue: TStorikStore
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => TStorikStore
   encode?: (value: TStorikStore) => string
 }
-type CreateStorikOptionsWithSchema<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = {
+type CreateStorikOptionsWithSchema<
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+  TPersistentKey extends string | false = string | false,
+> = {
   schema: TSchema
   defaultValue: z.infer<TSchema>
   projectSlug?: string
-  persistent?: string | false
+  persistent?: TPersistentKey
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => z.infer<TSchema>
   encode?: (value: z.infer<TSchema>) => string
 }
 type CreateStorikOptions = CreateStorikOptionsWithoutSchema | CreateStorikOptionsWithSchema
+type StorikWithoutSchema<
+  TStorikStore extends StorikStore = StorikStore,
+  TPersistentKey extends string | false = string | false,
+> = {
+  persistentKey: TPersistentKey
+  nanostore: ReturnType<typeof atom<TStorikStore>>
+  schema: null
+  defaultValue: TStorikStore
+  decode: (value: string) => TStorikStore
+  encode: (value: TStorikStore) => string
+  useStore: () => TStorikStore
+  getStore: () => TStorikStore
+  resetStore: (value?: Partial<TStorikStore>) => void
+  updateStore: (value: Partial<TStorikStore>) => void
+}
+type StorikWithSchema<
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+  TPersistentKey extends string | false = string | false,
+> = {
+  persistentKey: TPersistentKey
+  nanostore: ReturnType<typeof atom<z.infer<TSchema>>>
+  schema: TSchema
+  defaultValue: z.infer<TSchema>
+  decode: (value: string) => z.infer<TSchema>
+  encode: (value: z.infer<TSchema>) => string
+  useStore: () => z.infer<TSchema>
+  getStore: () => z.infer<TSchema>
+  resetStore: (value?: Partial<z.infer<TSchema>>) => void
+  updateStore: (value: Partial<z.infer<TSchema>>) => void
+}
 type CreateStorik = {
-  <TStorikStore extends StorikStore>(
+  <TStorikStore extends StorikStore = StorikStore, TPersistentKey extends string | false = string | false>(
     options: CreateStorikOptionsWithoutSchema<TStorikStore>
-  ): {
-    useStore: () => TStorikStore
-    getStore: () => TStorikStore
-    resetStore: (value?: Partial<TStorikStore>) => void
-    updateStore: (value: Partial<TStorikStore>) => void
-  }
-  <TSchema extends z.ZodTypeAny>(
+  ): StorikWithoutSchema<TStorikStore, TPersistentKey>
+  <TSchema extends z.ZodTypeAny = z.ZodTypeAny, TPersistentKey extends string | false = string | false>(
     options: CreateStorikOptionsWithSchema<TSchema>
-  ): {
-    useStore: () => z.infer<TSchema>
-    getStore: () => z.infer<TSchema>
-    resetStore: (value?: Partial<z.infer<TSchema>>) => void
-    updateStore: (value: Partial<z.infer<TSchema>>) => void
-  }
+  ): StorikWithSchema<TSchema, TPersistentKey>
 }
 export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
   const schema = 'schema' in options ? options.schema : null
@@ -233,6 +259,12 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
     store.set({ ...store.get(), ...value })
   }
   return {
+    persistentKey: persistentKey || null,
+    nanostore: store,
+    schema: schema as any,
+    defaultValue: options.defaultValue,
+    decode,
+    encode,
     useStore,
     getStore,
     resetStore,
@@ -243,17 +275,21 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
 type StorikPrimitiveStore = string | number | boolean | undefined | null
 type CreateStorikPrimitiveOptionsWithoutSchema<
   TStorikPrimitiveStore extends StorikPrimitiveStore = StorikPrimitiveStore,
+  TPersistentKey extends string | false = string | false,
 > = {
   defaultValue: TStorikPrimitiveStore
   projectSlug?: string
-  persistent?: string | false
+  persistent?: TPersistentKey
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => TStorikPrimitiveStore
   encode?: (value: TStorikPrimitiveStore) => string
 }
-type CreateStorikPrimitiveOptionsWithSchema<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = {
+type CreateStorikPrimitiveOptionsWithSchema<
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+  TPersistentKey extends string | false = string | false,
+> = {
   projectSlug?: string
-  persistent?: string | false
+  persistent?: TPersistentKey
   schema: TSchema
   defaultValue: z.infer<TSchema>
   useServerPersistentStore?: () => Record<string, any>
@@ -261,23 +297,46 @@ type CreateStorikPrimitiveOptionsWithSchema<TSchema extends z.ZodTypeAny = z.Zod
   encode?: (value: z.infer<TSchema>) => string
 }
 type CreateStorikPrimitiveOptions = CreateStorikPrimitiveOptionsWithoutSchema | CreateStorikPrimitiveOptionsWithSchema
+type StorikPrimitiveWithoutSchema<
+  TStorikPrimitiveStore extends StorikPrimitiveStore = StorikPrimitiveStore,
+  TPersistentKey extends string | false = false,
+> = {
+  persistentKey: TPersistentKey
+  nanostore: ReturnType<typeof atom<TStorikPrimitiveStore>>
+  schema: null
+  defaultValue: TStorikPrimitiveStore
+  decode: (value: string) => TStorikPrimitiveStore
+  encode: (value: TStorikPrimitiveStore) => string
+  useStore: () => TStorikPrimitiveStore
+  getStore: () => TStorikPrimitiveStore
+  resetStore: () => void
+  updateStore: (value: TStorikPrimitiveStore) => void
+}
+type StorikPrimitiveWithSchema<
+  TSchema extends z.ZodTypeAny = z.ZodTypeAny,
+  TPersistentKey extends string | false = false,
+> = {
+  persistentKey: TPersistentKey
+  nanostore: ReturnType<typeof atom<z.infer<TSchema>>>
+  schema: TSchema
+  defaultValue: z.infer<TSchema>
+  decode: (value: string) => z.infer<TSchema>
+  encode: (value: z.infer<TSchema>) => string
+  useStore: () => z.infer<TSchema>
+  getStore: () => z.infer<TSchema>
+  resetStore: () => void
+  updateStore: (value: z.infer<TSchema>) => void
+}
 type CreateStorikPrimitive = {
-  <TStorikPrimitiveStore extends StorikPrimitiveStore>(
-    options: CreateStorikPrimitiveOptionsWithoutSchema<TStorikPrimitiveStore>
-  ): {
-    useStore: () => TStorikPrimitiveStore
-    getStore: () => TStorikPrimitiveStore
-    resetStore: () => void
-    updateStore: (value: TStorikPrimitiveStore) => void
-  }
-  <TSchema extends z.ZodTypeAny>(
-    options: CreateStorikPrimitiveOptionsWithSchema<TSchema>
-  ): {
-    useStore: () => z.infer<TSchema>
-    getStore: () => z.infer<TSchema>
-    resetStore: () => void
-    updateStore: (value: z.infer<TSchema>) => void
-  }
+  <
+    TStorikPrimitiveStore extends StorikPrimitiveStore = StorikPrimitiveStore,
+    TPersistentKey extends string | false = false,
+  >(
+    options: CreateStorikPrimitiveOptionsWithoutSchema<TStorikPrimitiveStore, TPersistentKey>
+  ): StorikPrimitiveWithoutSchema<TStorikPrimitiveStore, TPersistentKey>
+  <TSchema extends z.ZodTypeAny = z.ZodTypeAny, TPersistentKey extends string | false = false>(
+    options: CreateStorikPrimitiveOptionsWithSchema<TSchema, TPersistentKey>
+  ): StorikPrimitiveWithSchema<TSchema, TPersistentKey>
 }
 export const createStorikPrimitive: CreateStorikPrimitive = (options: {
   projectSlug?: string
@@ -288,6 +347,8 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
   decode?: (value: string) => any
   encode?: (value: any) => string
 }) => {
+  const schema = 'schema' in options ? options.schema || null : null
+
   const persistentKey =
     options.projectSlug && options.persistent
       ? `${options.projectSlug}-${options.persistent}`
@@ -371,6 +432,12 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
     store.set(value)
   }
   return {
+    persistentKey: persistentKey || null,
+    nanostore: store,
+    schema: schema as any,
+    defaultValue: options.defaultValue,
+    decode,
+    encode,
     useStore,
     getStore,
     resetStore,
@@ -378,7 +445,16 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
   }
 }
 
-export const createStorikThings = ({
+export type Storik = StorikWithSchema | StorikWithoutSchema
+export type StorikPersistent = StorikWithSchema<any, string> | StorikWithoutSchema<any, string>
+export type StorikPrimitive = StorikPrimitiveWithSchema | StorikPrimitiveWithoutSchema
+export type StorikPrimitivePersistent =
+  | StorikPrimitiveWithSchema<any, string>
+  | StorikPrimitiveWithoutSchema<any, string>
+export type StorikAny = Storik | StorikPrimitive
+export type StroikAnyPersistent = StorikPersistent | StorikPrimitivePersistent
+
+export const createStorikClientThings = ({
   projectSlug,
   useServerPersistentStore,
 }: {

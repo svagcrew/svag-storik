@@ -17,7 +17,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "./dist/index.js",
   "files": [
     "./src/**/*",
     "./dist/**/*"
@@ -39,12 +38,14 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.4",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "eslint": "^9.3.0",
+    "express": "^4.19.2",
     "husky": "^9.0.11",
     "jest": "30.0.0-alpha.4",
     "prettier": "^3.2.5",
