@@ -6,7 +6,7 @@ import {
 } from '@nanostores/persistent'
 import { useStore as useNanostore } from '@nanostores/react'
 import Cookies from 'js-cookie'
-import cloneDeep from 'lodash/clonedeep.js'
+import cloneDeep from 'lodash/cloneDeep.js'
 import { atom } from 'nanostores'
 import type z from 'zod'
 
