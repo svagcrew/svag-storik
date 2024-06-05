@@ -1,4 +1,4 @@
-import type { StroikAnyPersistent } from '@/client'
+import type { StroikAnyPersistent } from '@/client.js'
 import type { Express } from 'express'
 import cloneDeep from 'lodash/cloneDeep.js'
 
