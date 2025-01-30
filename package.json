@@ -1,6 +1,6 @@
 {
   "name": "svag-storik",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "homepage": "https://github.com/svagcrew/svag-storik",
   "repository": {
     "type": "git",
@@ -17,11 +17,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "type": "module",
   "files": [
     "./src/**/*",
     "./dist/**/*"
   ],
   "scripts": {
+    "types": "svag-ts types",
     "build": "svag-ts build",
     "dev": "svag-ts dev",
     "lint": "svag-lint lint",
@@ -29,7 +31,6 @@
     "prettify": "svag-prettier prettify",
     "start": "svag-ts start",
     "test": "svag-jest test",
-    "types": "svag-ts types",
     "watch": "svag-ts watch"
   },
   "peerDependencies": {
@@ -69,6 +70,5 @@
     "projectPackages": [
       "@nanostores/react"
     ]
-  },
-  "type": "module"
+  }
 }
