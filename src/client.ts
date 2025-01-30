@@ -118,6 +118,8 @@ type CreateStorikOptionsWithoutSchema<
   projectSlug?: string
   persistent?: TPersistentKey
   defaultValue: TStorikStore
+  overridePersistentGet?: (persistentKey: string) => TStorikStore
+  onPersistentSet?: (persistentKey: string, value: TStorikStore) => any
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => TStorikStore
   encode?: (value: TStorikStore) => string
@@ -128,6 +130,8 @@ type CreateStorikOptionsWithSchema<
 > = {
   schema: TSchema
   defaultValue: z.infer<TSchema>
+  overridePersistentGet?: (persistentKey: string) => z.infer<TSchema>
+  onPersistentSet?: (persistentKey: string, value: z.infer<TSchema>) => any
   projectSlug?: string
   persistent?: TPersistentKey
   useServerPersistentStore?: () => Record<string, any>
@@ -143,6 +147,8 @@ type StorikWithoutSchema<
   nanostore: ReturnType<typeof atom<TStorikStore>>
   schema: null
   defaultValue: TStorikStore
+  overridePersistentGet?: (persistentKey: string) => TStorikStore
+  onPersistentSet?: (persistentKey: string, value: TStorikStore) => any
   decode: (value: string) => TStorikStore
   encode: (value: TStorikStore) => string
   useStore: () => TStorikStore
@@ -158,6 +164,8 @@ type StorikWithSchema<
   nanostore: ReturnType<typeof atom<z.infer<TSchema>>>
   schema: TSchema
   defaultValue: z.infer<TSchema>
+  overridePersistentGet?: (persistentKey: string) => z.infer<TSchema>
+  onPersistentSet?: (persistentKey: string, value: z.infer<TSchema>) => any
   decode: (value: string) => z.infer<TSchema>
   encode: (value: z.infer<TSchema>) => string
   useStore: () => z.infer<TSchema>
@@ -199,9 +207,15 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
       return JSON.stringify(value)
     })
 
+  const overridePersistentGet = options.overridePersistentGet
+  const onPersistentSet = options.onPersistentSet
+
   const store = (() => {
     if (!persistentKey) {
       return atom(options.defaultValue)
+    }
+    if (overridePersistentGet) {
+      return atom(overridePersistentGet?.(persistentKey) || options.defaultValue)
     }
     return persistentAtom(persistentKey, options.defaultValue, {
       encode(value) {
@@ -221,7 +235,9 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
     })
   })()
   const getStore = () => {
-    const storeValue = store.get()
+    const storeValue =
+      (persistentKey && overridePersistentGet ? overridePersistentGet(persistentKey) : store.get()) ||
+      options.defaultValue
     if (!schema) {
       return storeValue
     }
@@ -253,10 +269,17 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
     return useNanostore(store)
   }
   const resetStore = (value?: StorikStore) => {
-    store.set({ ...options.defaultValue, ...value })
+    const newStore = { ...options.defaultValue, ...value }
+    store.set(newStore)
+    persistentKey && onPersistentSet?.(persistentKey, newStore)
   }
   const updateStore = (value: StorikStore) => {
-    store.set({ ...store.get(), ...value })
+    const currentStore =
+      (persistentKey && overridePersistentGet ? overridePersistentGet(persistentKey) : store.get()) ||
+      options.defaultValue
+    const newStore = { ...currentStore, ...value }
+    store.set(newStore)
+    persistentKey && onPersistentSet?.(persistentKey, newStore)
   }
   return {
     persistentKey: persistentKey || null,
@@ -280,6 +303,8 @@ type CreateStorikPrimitiveOptionsWithoutSchema<
   defaultValue: TStorikPrimitiveStore
   projectSlug?: string
   persistent?: TPersistentKey
+  overridePersistentGet?: (persistentKey: string) => TStorikPrimitiveStore
+  onPersistentSet?: (persistentKey: string, value: TStorikPrimitiveStore) => any
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => TStorikPrimitiveStore
   encode?: (value: TStorikPrimitiveStore) => string
@@ -290,6 +315,8 @@ type CreateStorikPrimitiveOptionsWithSchema<
 > = {
   projectSlug?: string
   persistent?: TPersistentKey
+  overridePersistentGet?: (persistentKey: string) => z.infer<TSchema>
+  onPersistentSet?: (persistentKey: string, value: z.infer<TSchema>) => any
   schema: TSchema
   defaultValue: z.infer<TSchema>
   useServerPersistentStore?: () => Record<string, any>
@@ -343,6 +370,8 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
   persistent?: string | false
   schema?: z.ZodTypeAny
   defaultValue: any
+  overridePersistentGet?: (persistentKey: string) => any
+  onPersistentSet?: (persistentKey: string, value: any) => any
   useServerPersistentStore?: () => Record<string, any>
   decode?: (value: string) => any
   encode?: (value: any) => string
@@ -372,9 +401,15 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
       return JSON.stringify(value)
     })
 
+  const overridePersistentGet = options.overridePersistentGet
+  const onPersistentSet = options.onPersistentSet
+
   const store = (() => {
     if (!persistentKey) {
       return atom(options.defaultValue)
+    }
+    if (overridePersistentGet && persistentKey) {
+      return atom(overridePersistentGet(persistentKey) || options.defaultValue)
     }
     return persistentAtom(persistentKey, options.defaultValue, {
       encode(value) {
@@ -394,7 +429,7 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
     })
   })()
   const getStore = () => {
-    const storeValue = store.get()
+    const storeValue = overridePersistentGet && persistentKey ? overridePersistentGet(persistentKey) : store.get()
     if (!options.schema) {
       return storeValue
     }
@@ -427,9 +462,11 @@ export const createStorikPrimitive: CreateStorikPrimitive = (options: {
   }
   const resetStore = () => {
     store.set(options.defaultValue)
+    persistentKey && onPersistentSet?.(persistentKey, options.defaultValue)
   }
   const updateStore = (value: any) => {
     store.set(value)
+    persistentKey && onPersistentSet?.(persistentKey, value)
   }
   return {
     persistentKey: persistentKey || null,
@@ -457,15 +494,39 @@ export type StroikAnyPersistent = StorikPersistent | StorikPrimitivePersistent
 export const createStorikClientThings = ({
   projectSlug,
   useServerPersistentStore,
+  overridePersistentGet,
+  onPersistentSet,
+  onCreateStorik,
 }: {
   projectSlug?: string
   useServerPersistentStore?: () => Record<string, any>
+  overridePersistentGet?: (persistentKey: string) => any
+  onPersistentSet?: (persistentKey: string, value: any) => any
+  onCreateStorik?: (storik: StorikAny | StroikAnyPersistent) => any
 }) => {
   const createStorikHere: typeof createStorik = (options: CreateStorikOptions) => {
-    return createStorik({ projectSlug, useServerPersistentStore, ...options })
+    const createStorikOptions = {
+      projectSlug,
+      useServerPersistentStore,
+      overridePersistentGet,
+      onPersistentSet,
+      ...options,
+    }
+    const storik = createStorik(createStorikOptions)
+    onCreateStorik?.(storik)
+    return storik
   }
   const createStorikPrimitiveHere: typeof createStorikPrimitive = (options: CreateStorikPrimitiveOptions) => {
-    return createStorikPrimitive({ projectSlug, useServerPersistentStore, ...options })
+    const createStorikOptions = {
+      projectSlug,
+      useServerPersistentStore,
+      overridePersistentGet,
+      onPersistentSet,
+      ...options,
+    }
+    const storik = createStorikPrimitive(createStorikOptions)
+    onCreateStorik?.(storik as any)
+    return storik
   }
 
   return {
