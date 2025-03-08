@@ -111,7 +111,7 @@ const events = {
 setPersistentEngine(storage, events)
 
 type StorikStore = Record<string, any>
-type CreateStorikOptionsWithoutSchema<
+export type CreateStorikOptionsWithoutSchema<
   TStorikStore extends StorikStore = StorikStore,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -124,7 +124,7 @@ type CreateStorikOptionsWithoutSchema<
   decode?: (value: string) => TStorikStore
   encode?: (value: TStorikStore) => string
 }
-type CreateStorikOptionsWithSchema<
+export type CreateStorikOptionsWithSchema<
   TSchema extends z.ZodTypeAny = z.ZodTypeAny,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -139,7 +139,7 @@ type CreateStorikOptionsWithSchema<
   encode?: (value: z.infer<TSchema>) => string
 }
 type CreateStorikOptions = CreateStorikOptionsWithoutSchema | CreateStorikOptionsWithSchema
-type StorikWithoutSchema<
+export type StorikWithoutSchema<
   TStorikStore extends StorikStore = StorikStore,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -156,7 +156,7 @@ type StorikWithoutSchema<
   resetStore: (value?: Partial<TStorikStore>) => void
   updateStore: (value: Partial<TStorikStore>) => void
 }
-type StorikWithSchema<
+export type StorikWithSchema<
   TSchema extends z.ZodTypeAny = z.ZodTypeAny,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -296,7 +296,7 @@ export const createStorik: CreateStorik = (options: CreateStorikOptions) => {
 }
 
 type StorikPrimitiveStore = string | number | boolean | undefined | null
-type CreateStorikPrimitiveOptionsWithoutSchema<
+export type CreateStorikPrimitiveOptionsWithoutSchema<
   TStorikPrimitiveStore extends StorikPrimitiveStore = StorikPrimitiveStore,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -309,7 +309,7 @@ type CreateStorikPrimitiveOptionsWithoutSchema<
   decode?: (value: string) => TStorikPrimitiveStore
   encode?: (value: TStorikPrimitiveStore) => string
 }
-type CreateStorikPrimitiveOptionsWithSchema<
+export type CreateStorikPrimitiveOptionsWithSchema<
   TSchema extends z.ZodTypeAny = z.ZodTypeAny,
   TPersistentKey extends string | false = string | false,
 > = {
@@ -324,7 +324,7 @@ type CreateStorikPrimitiveOptionsWithSchema<
   encode?: (value: z.infer<TSchema>) => string
 }
 type CreateStorikPrimitiveOptions = CreateStorikPrimitiveOptionsWithoutSchema | CreateStorikPrimitiveOptionsWithSchema
-type StorikPrimitiveWithoutSchema<
+export type StorikPrimitiveWithoutSchema<
   TStorikPrimitiveStore extends StorikPrimitiveStore = StorikPrimitiveStore,
   TPersistentKey extends string | false = false,
 > = {
@@ -339,7 +339,7 @@ type StorikPrimitiveWithoutSchema<
   resetStore: () => void
   updateStore: (value: TStorikPrimitiveStore) => void
 }
-type StorikPrimitiveWithSchema<
+export type StorikPrimitiveWithSchema<
   TSchema extends z.ZodTypeAny = z.ZodTypeAny,
   TPersistentKey extends string | false = false,
 > = {
